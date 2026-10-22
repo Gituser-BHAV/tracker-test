@@ -1,0 +1,45 @@
+name: Ecommerce Price Tracker
+
+on:
+  schedule:
+    # Runs every 6 hours (Adjust cron as needed)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  scrape-and-track:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out your repository code
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # Step 2: Set up Python environment
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # Step 3: Cache dependencies to speed up subsequent runs
+    - name: Cache Pip Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Step 4: Install your package requirements
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # Step 5: Execute the tracker script with injected environment secrets
+    - name: Run Price Tracker
+      env:
+        AMAZON_PRODUCT_URL: ${{ secrets.AMAZON_PRODUCT_URL }}
+        FLIPKART_PRODUCT_URL: ${{ secrets.FLIPKART_PRODUCT_URL }}
+        # Add Telegram or Email secrets here if needed for alerts
+      run: python tracker.py
